@@ -9,6 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
     
+    // MARK: - PROPERTIES
+    
     @State private var correctAnswer = Int.random(in: 0...2)
     @State private var userScore: Int = 0
     @State private var showingScore = false
@@ -17,8 +19,61 @@ struct ContentView: View {
     @State private var questionCounter = 1
     @State private var countries = allCountries.shuffled()
     @State private var highscore: Int = UserDefaults.standard.integer(forKey: "HighScore")
+    @State private var selectedFlag = -1
     
     static let allCountries = ["Estonia", "France", "Germany", "Ireland", "Italy", "Nigeria", "Poland", "Spain", "UK", "Ukraine", "US"].shuffled()
+    
+    // MARK: - METHODS
+    
+    func flagTapped(_ number: Int) {
+        selectedFlag = number
+        
+        if number == correctAnswer {
+            scoreTitle = "Correct!"
+            userScore += 1
+            
+        } else {
+            let needsThe = ["UK", "US"]
+            let theirAnswer = countries[number]
+            
+            if needsThe.contains(theirAnswer) {
+                scoreTitle = "Wrong! You chose the flag of the \(countries[number])"
+            } else {
+                scoreTitle = "Wrong! You chose the flag of \(countries[number])"
+            }
+        }
+        if questionCounter == 8 {
+            showingResults = true
+        } else {
+            showingScore = true
+        }
+    }
+    
+    func askQuestion() {
+        countries.remove(at: correctAnswer)
+        countries.shuffle()
+        correctAnswer = Int.random(in: 0...2)
+        questionCounter += 1
+        selectedFlag = -1
+    }
+    
+    func newGame() {
+        questionCounter = 0
+        userScore = 0
+        countries = Self.allCountries
+        askQuestion()
+    }
+    
+    func newHighScore() {
+        highscore = userScore
+        UserDefaults.standard.set(highscore, forKey: "HighScore")
+    }
+    
+    //func executeDelete() {
+    //    print("Deleted!!")
+    //}
+    
+    // MARK: - BODY
     
     var body: some View {
         ZStack {
@@ -48,10 +103,16 @@ struct ContentView: View {
                         Button {
                             flagTapped(number)
                         } label: {
-                            Image(countries[number])
-                                .clipShape(.capsule)
-                                .shadow(radius: 5)
+                            FlagImage(name: countries[number])
                         }
+                        .rotation3DEffect(
+                            .degrees(selectedFlag == number ? 360 : 0), axis: (x: 0.0, y: 1.0, z: 0.0))
+                        .blur(radius: selectedFlag == -1 || selectedFlag == number ? 0 : 3)
+                        //.saturation(selectedFlag == -1 || selectedFlag == number ? 1 : 0)
+                        //.scaleEffect(selectedFlag == -1 || selectedFlag == number ? 1.0 : 0.25)
+                        //.opacity(selectedFlag == -1 || selectedFlag == number ? 1.0 : 0.25)
+                        
+                        .animation(.default, value: selectedFlag)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -63,11 +124,11 @@ struct ContentView: View {
                 HStack {
                     Text("Score: \(userScore)")
                         .foregroundStyle(.white)
-                    .font(.title2.bold())
+                        .font(.title2.bold())
                     Spacer()
-//                    Text("High Score: \(highscore)")
-//                        .foregroundStyle(.white)
-//                    .font(.title2.bold())
+                    //                    Text("High Score: \(highscore)")
+                    //                        .foregroundStyle(.white)
+                    //                    .font(.title2.bold())
                 }
                 Spacer()
             }
@@ -127,51 +188,9 @@ struct ContentView: View {
     //                    .background(.red)
     //            }
     //        }
-    
-    func flagTapped(_ number: Int) {
-        if number == correctAnswer {
-            scoreTitle = "Correct!"
-            userScore += 1
-        } else {
-            let needsThe = ["UK", "US"]
-            let theirAnswer = countries[number]
-            
-            if needsThe.contains(theirAnswer) {
-                scoreTitle = "Wrong! You chose the flag of the \(countries[number])"
-            } else {
-                scoreTitle = "Wrong! You chose the flag of \(countries[number])"
-            }
-        }
-        if questionCounter == 8 {
-            showingResults = true
-        } else {
-            showingScore = true
-        }
-    }
-    
-    func askQuestion() {
-        countries.remove(at: correctAnswer)
-        countries.shuffle()
-        correctAnswer = Int.random(in: 0...2)
-        questionCounter += 1
-    }
-    
-    func newGame() {
-        questionCounter = 0
-        userScore = 0
-        countries = Self.allCountries
-        askQuestion()
-    }
-    
-    func newHighScore() {
-        highscore = userScore
-        UserDefaults.standard.set(highscore, forKey: "HighScore")
-    }
 }
 
-//func executeDelete() {
-//    print("Deleted!!")
-//}
+// MARK: - PREVIEW
 
 #Preview {
     ContentView()
